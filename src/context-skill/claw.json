@@ -1,0 +1,170 @@
+{
+  "name": "snipara-context",
+  "version": "0.1.0",
+  "description": "Context optimization and semantic search for OpenClaw via Snipara",
+  "author": "Snipara",
+  "homepage": "https://snipara.com/docs/integration/openclaw",
+  "category": "context",
+  "tags": ["context", "search", "semantic", "chunking", "documentation"],
+  "config": {
+    "apiKey": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_API_KEY",
+      "description": "Your Snipara API key"
+    },
+    "projectSlug": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_PROJECT_SLUG",
+      "description": "Your Snipara project slug"
+    }
+  },
+  "tools": [
+    {
+      "name": "context_query",
+      "description": "Query documentation for relevant context with semantic search and token budgeting. Returns only the most relevant sections within your token limit.",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "Question or topic to search for"
+        },
+        "maxTokens": {
+          "type": "number",
+          "default": 4000,
+          "description": "Maximum tokens to return (budget your context window)"
+        },
+        "searchMode": {
+          "type": "string",
+          "enum": ["keyword", "semantic", "hybrid"],
+          "default": "hybrid",
+          "description": "Search mode: keyword (exact match), semantic (meaning), or hybrid (both)"
+        },
+        "includeMetadata": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include file paths and relevance scores"
+        }
+      }
+    },
+    {
+      "name": "upload_document",
+      "description": "Upload a document for indexing. Snipara will chunk and embed it for semantic search.",
+      "parameters": {
+        "path": {
+          "type": "string",
+          "required": true,
+          "description": "Document path (e.g., 'docs/api.md', 'src/auth.ts')"
+        },
+        "content": {
+          "type": "string",
+          "required": true,
+          "description": "Document content (markdown, code, etc.)"
+        }
+      }
+    },
+    {
+      "name": "search",
+      "description": "Search documentation for a regex pattern. Good for finding exact matches.",
+      "parameters": {
+        "pattern": {
+          "type": "string",
+          "required": true,
+          "description": "Regex pattern to search for"
+        },
+        "maxResults": {
+          "type": "number",
+          "default": 20,
+          "description": "Maximum results to return"
+        }
+      }
+    },
+    {
+      "name": "decompose",
+      "description": "Break a complex query into sub-queries with execution order. Use for multi-part questions.",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "Complex question to decompose"
+        },
+        "maxDepth": {
+          "type": "number",
+          "default": 2,
+          "description": "Maximum decomposition depth (1-5)"
+        }
+      }
+    },
+    {
+      "name": "plan",
+      "description": "Generate an execution plan for a complex question. Returns ordered steps with dependencies.",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "Complex question to plan for"
+        },
+        "maxTokens": {
+          "type": "number",
+          "default": 16000,
+          "description": "Total token budget for the plan"
+        },
+        "strategy": {
+          "type": "string",
+          "enum": ["breadth_first", "depth_first", "relevance_first"],
+          "default": "relevance_first",
+          "description": "Execution strategy"
+        }
+      }
+    },
+    {
+      "name": "multi_query",
+      "description": "Execute multiple queries in one call. More efficient than individual calls.",
+      "parameters": {
+        "queries": {
+          "type": "array",
+          "required": true,
+          "items": {
+            "type": "object",
+            "properties": {
+              "query": { "type": "string" },
+              "maxTokens": { "type": "number" }
+            }
+          },
+          "description": "Array of queries to execute"
+        },
+        "totalMaxTokens": {
+          "type": "number",
+          "default": 8000,
+          "description": "Total token budget across all queries"
+        }
+      }
+    },
+    {
+      "name": "sections",
+      "description": "List all indexed documentation sections. Use to explore available content.",
+      "parameters": {
+        "filter": {
+          "type": "string",
+          "description": "Filter sections by title prefix (case-insensitive)"
+        },
+        "limit": {
+          "type": "number",
+          "default": 50,
+          "description": "Maximum sections to return"
+        },
+        "offset": {
+          "type": "number",
+          "default": 0,
+          "description": "Pagination offset"
+        }
+      }
+    },
+    {
+      "name": "stats",
+      "description": "Get documentation statistics for the project.",
+      "parameters": {}
+    }
+  ]
+}

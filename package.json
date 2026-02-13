@@ -1,0 +1,100 @@
+{
+  "name": "@snipara/openclaw",
+  "version": "0.1.0",
+  "description": "Snipara integration for OpenClaw - Multi-agent swarms, context optimization, and persistent memory",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./memory-plugin": {
+      "types": "./dist/memory-plugin.d.ts",
+      "import": "./dist/memory-plugin.mjs",
+      "require": "./dist/memory-plugin.js"
+    },
+    "./swarm-skill": {
+      "types": "./dist/swarm-skill/index.d.ts",
+      "import": "./dist/swarm-skill/index.mjs",
+      "require": "./dist/swarm-skill/index.js"
+    },
+    "./context-skill": {
+      "types": "./dist/context-skill/index.d.ts",
+      "import": "./dist/context-skill/index.mjs",
+      "require": "./dist/context-skill/index.js"
+    },
+    "./execution-skill": {
+      "types": "./dist/execution-skill/index.d.ts",
+      "import": "./dist/execution-skill/index.mjs",
+      "require": "./dist/execution-skill/index.js"
+    }
+  },
+  "bin": {
+    "snipara-openclaw-install": "./dist/cli/install.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "prepublishOnly": "npm run build",
+    "release": "npm run build && npm publish --access public"
+  },
+  "keywords": [
+    "snipara",
+    "openclaw",
+    "moltbot",
+    "clawdbot",
+    "ai-agent",
+    "multi-agent",
+    "swarm",
+    "memory",
+    "context-optimization",
+    "llm",
+    "mcp",
+    "claude",
+    "anthropic"
+  ],
+  "author": "Snipara <hello@snipara.com>",
+  "license": "MIT",
+  "homepage": "https://snipara.com/docs/integration/openclaw",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Snipara/snipara-openclaw.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Snipara/snipara-openclaw/issues"
+  },
+  "dependencies": {
+    "chalk": "^5.4.1",
+    "commander": "^12.1.0",
+    "conf": "^12.0.0",
+    "open": "^10.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.31",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

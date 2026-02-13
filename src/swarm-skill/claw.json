@@ -1,0 +1,351 @@
+{
+  "name": "snipara-swarm",
+  "version": "0.1.0",
+  "description": "Multi-agent swarm coordination for OpenClaw via Snipara",
+  "author": "Snipara",
+  "homepage": "https://snipara.com/docs/integration/openclaw",
+  "category": "coordination",
+  "tags": ["multi-agent", "swarm", "coordination", "distributed", "locks"],
+  "config": {
+    "apiKey": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_API_KEY",
+      "description": "Your Snipara API key"
+    },
+    "projectSlug": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_PROJECT_SLUG",
+      "description": "Your Snipara project slug"
+    }
+  },
+  "tools": [
+    {
+      "name": "swarm_create",
+      "description": "Create a new agent swarm for multi-agent coordination. Returns a swarm ID for other agents to join.",
+      "parameters": {
+        "name": {
+          "type": "string",
+          "required": true,
+          "description": "Name of the swarm (e.g., 'code-review', 'feature-implementation')"
+        },
+        "description": {
+          "type": "string",
+          "description": "Optional description of the swarm's purpose"
+        },
+        "maxAgents": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum number of agents allowed in the swarm"
+        }
+      }
+    },
+    {
+      "name": "swarm_join",
+      "description": "Join an existing swarm as an agent. Agents can have different roles: coordinator, worker, or observer.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm to join"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your unique agent identifier"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["coordinator", "worker", "observer"],
+          "default": "worker",
+          "description": "Role in the swarm"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "List of agent capabilities (e.g., ['code', 'review', 'test'])"
+        }
+      }
+    },
+    {
+      "name": "claim_resource",
+      "description": "Claim exclusive access to a resource (file, function, module). Prevents other agents from modifying it simultaneously.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "resourceType": {
+          "type": "string",
+          "required": true,
+          "enum": ["file", "function", "module", "component", "other"],
+          "description": "Type of resource to claim"
+        },
+        "resourceId": {
+          "type": "string",
+          "required": true,
+          "description": "Resource identifier (e.g., file path, function name)"
+        },
+        "timeoutSeconds": {
+          "type": "number",
+          "default": 300,
+          "description": "How long to hold the claim (auto-releases after timeout)"
+        }
+      }
+    },
+    {
+      "name": "release_resource",
+      "description": "Release a previously claimed resource so other agents can use it.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "resourceType": {
+          "type": "string",
+          "description": "Type of resource"
+        },
+        "resourceId": {
+          "type": "string",
+          "description": "Resource identifier"
+        },
+        "claimId": {
+          "type": "string",
+          "description": "Claim ID (alternative to resourceType/resourceId)"
+        }
+      }
+    },
+    {
+      "name": "get_state",
+      "description": "Read shared state from the swarm. Use for coordination data that all agents need.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "key": {
+          "type": "string",
+          "required": true,
+          "description": "State key to read (e.g., 'progress', 'config', 'results')"
+        }
+      }
+    },
+    {
+      "name": "set_state",
+      "description": "Write shared state to the swarm. Uses optimistic locking to prevent conflicts.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "key": {
+          "type": "string",
+          "required": true,
+          "description": "State key to write"
+        },
+        "value": {
+          "type": "any",
+          "required": true,
+          "description": "Value to set (any JSON-serializable type)"
+        },
+        "expectedVersion": {
+          "type": "number",
+          "description": "Expected version for optimistic locking (prevents lost updates)"
+        }
+      }
+    },
+    {
+      "name": "broadcast",
+      "description": "Send an event to all agents in the swarm. Use for announcements, status updates, or coordination signals.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "eventType": {
+          "type": "string",
+          "required": true,
+          "description": "Type of event (e.g., 'task_completed', 'help_needed', 'all_done')"
+        },
+        "payload": {
+          "type": "object",
+          "description": "Optional event data"
+        }
+      }
+    },
+    {
+      "name": "task_create",
+      "description": "Create a task in the swarm's distributed task queue. Tasks can have dependencies and priorities.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "title": {
+          "type": "string",
+          "required": true,
+          "description": "Task title"
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed task description"
+        },
+        "priority": {
+          "type": "number",
+          "default": 0,
+          "description": "Priority (higher = more urgent)"
+        },
+        "dependsOn": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Task IDs that must complete before this task"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional task metadata"
+        }
+      }
+    },
+    {
+      "name": "task_claim",
+      "description": "Claim a task from the queue. Returns the highest priority available task, or a specific task if ID provided.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "taskId": {
+          "type": "string",
+          "description": "Specific task ID to claim (optional)"
+        },
+        "timeoutSeconds": {
+          "type": "number",
+          "default": 600,
+          "description": "How long to hold the task claim"
+        }
+      }
+    },
+    {
+      "name": "task_complete",
+      "description": "Mark a claimed task as completed or failed.",
+      "parameters": {
+        "swarmId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the swarm"
+        },
+        "agentId": {
+          "type": "string",
+          "required": true,
+          "description": "Your agent identifier"
+        },
+        "taskId": {
+          "type": "string",
+          "required": true,
+          "description": "ID of the task to complete"
+        },
+        "success": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether the task succeeded"
+        },
+        "result": {
+          "type": "any",
+          "description": "Task result data"
+        }
+      }
+    },
+    {
+      "name": "remember",
+      "description": "Store a memory for later semantic recall. Useful for persisting decisions, learnings, and context.",
+      "parameters": {
+        "content": {
+          "type": "string",
+          "required": true,
+          "description": "Memory content to store"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["fact", "decision", "learning", "preference", "todo", "context"],
+          "default": "fact",
+          "description": "Type of memory"
+        },
+        "category": {
+          "type": "string",
+          "description": "Optional category for grouping"
+        },
+        "ttlDays": {
+          "type": "number",
+          "description": "Days until expiration (null = permanent)"
+        }
+      }
+    },
+    {
+      "name": "recall",
+      "description": "Semantically recall relevant memories based on a query.",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "required": true,
+          "description": "Search query"
+        },
+        "type": {
+          "type": "string",
+          "description": "Filter by memory type"
+        },
+        "category": {
+          "type": "string",
+          "description": "Filter by category"
+        },
+        "limit": {
+          "type": "number",
+          "default": 5,
+          "description": "Maximum memories to return"
+        },
+        "minRelevance": {
+          "type": "number",
+          "default": 0.5,
+          "description": "Minimum relevance score (0-1)"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,99 @@
+{
+  "name": "snipara-execution",
+  "version": "0.1.0",
+  "description": "Safe Python execution for OpenClaw coding agents via Snipara RLM-Runtime",
+  "author": "Snipara",
+  "homepage": "https://snipara.com/docs/integration/openclaw",
+  "category": "execution",
+  "tags": ["python", "execution", "sandbox", "coding", "runtime"],
+  "config": {
+    "apiKey": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_API_KEY",
+      "description": "Your Snipara API key"
+    },
+    "projectSlug": {
+      "type": "string",
+      "required": true,
+      "env": "SNIPARA_PROJECT_SLUG",
+      "description": "Your Snipara project slug"
+    }
+  },
+  "tools": [
+    {
+      "name": "execute_python",
+      "description": "Execute Python code in a sandboxed environment. Safe for math, data processing, and algorithm work. Use 'result = <value>' to return a value. Use print() for output.",
+      "parameters": {
+        "code": {
+          "type": "string",
+          "required": true,
+          "description": "Python code to execute"
+        },
+        "sessionId": {
+          "type": "string",
+          "default": "default",
+          "description": "Session ID for isolated context. Variables persist across calls with same session ID."
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Timeout in seconds (overrides profile). Max: 300"
+        },
+        "profile": {
+          "type": "string",
+          "enum": ["quick", "default", "analysis", "extended"],
+          "default": "default",
+          "description": "Execution profile: quick (5s), default (30s), analysis (120s), extended (300s)"
+        }
+      }
+    },
+    {
+      "name": "agent_run",
+      "description": "Start an autonomous agent that iteratively solves a task. The agent loops: observe → think → act → terminate. Returns a run_id to check status.",
+      "parameters": {
+        "task": {
+          "type": "string",
+          "required": true,
+          "description": "The task for the agent to solve"
+        },
+        "maxIterations": {
+          "type": "number",
+          "default": 10,
+          "description": "Maximum iterations (max: 50)"
+        },
+        "tokenBudget": {
+          "type": "number",
+          "default": 50000,
+          "description": "Token budget for the agent"
+        },
+        "costLimit": {
+          "type": "number",
+          "default": 2,
+          "description": "Cost limit in USD (max: 10)"
+        }
+      }
+    },
+    {
+      "name": "agent_status",
+      "description": "Check the status of an autonomous agent run. Returns running/completed/error status and the result if done.",
+      "parameters": {
+        "runId": {
+          "type": "string",
+          "required": true,
+          "description": "The agent run ID from agent_run"
+        }
+      }
+    },
+    {
+      "name": "agent_cancel",
+      "description": "Cancel a running autonomous agent.",
+      "parameters": {
+        "runId": {
+          "type": "string",
+          "required": true,
+          "description": "The agent run ID to cancel"
+        }
+      }
+    }
+  ]
+}
