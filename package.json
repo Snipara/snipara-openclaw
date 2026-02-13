@@ -1,6 +1,6 @@
 {
-  "name": "@snipara/openclaw",
-  "version": "0.1.0",
+  "name": "snipara-openclaw",
+  "version": "0.1.1",
   "description": "Snipara integration for OpenClaw - Multi-agent swarms, context optimization, and persistent memory",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

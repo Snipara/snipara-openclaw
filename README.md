@@ -1,8 +1,8 @@
-# @snipara/openclaw
+# snipara-openclaw
 
 Multi-agent swarms, context optimization, and safe code execution for OpenClaw.
 
-[![npm version](https://badge.fury.io/js/%40snipara%2Fopenclaw.svg)](https://www.npmjs.com/package/@snipara/openclaw)
+[![npm version](https://badge.fury.io/js/%40snipara%2Fopenclaw.svg)](https://www.npmjs.com/package/snipara-openclaw)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Why Snipara for OpenClaw?
@@ -35,7 +35,7 @@ This will:
 ### Manual Installation
 
 ```bash
-npm install @snipara/openclaw
+npm install snipara-openclaw
 ```
 
 ## Features
@@ -45,7 +45,7 @@ npm install @snipara/openclaw
 Coordinate multiple agents working on the same codebase.
 
 ```typescript
-import { swarm_create, swarm_join, claim_resource, task_create } from "@snipara/openclaw/swarm-skill";
+import { swarm_create, swarm_join, claim_resource, task_create } from "snipara-openclaw/swarm-skill";
 
 // Create a swarm for code review
 const swarm = await swarm_create(ctx, { name: "code-review" });
@@ -87,7 +87,7 @@ await task_create(ctx, {
 Query your documentation with semantic search and token budgeting.
 
 ```typescript
-import { context_query, upload_document, plan } from "@snipara/openclaw/context-skill";
+import { context_query, upload_document, plan } from "snipara-openclaw/context-skill";
 
 // Upload project documentation
 await upload_document(ctx, {
@@ -125,7 +125,7 @@ const executionPlan = await plan(ctx, {
 Execute Python code in a secure sandbox via RLM-Runtime.
 
 ```typescript
-import { execute_python, agent_run, agent_status } from "@snipara/openclaw/execution-skill";
+import { execute_python, agent_run, agent_status } from "snipara-openclaw/execution-skill";
 
 // Test code in sandbox
 const result = await execute_python(ctx, {
@@ -166,7 +166,7 @@ const status = await agent_status(ctx, { runId: run.runId });
 Replace MEMORY.md with semantic memory.
 
 ```typescript
-import { remember, recall } from "@snipara/openclaw/swarm-skill";
+import { remember, recall } from "snipara-openclaw/swarm-skill";
 
 // Store a decision
 await remember(ctx, {
@@ -189,7 +189,7 @@ const memories = await recall(ctx, {
 Use Snipara as OpenClaw's memory backend:
 
 ```typescript
-import { createMemoryPlugin } from "@snipara/openclaw/memory-plugin";
+import { createMemoryPlugin } from "snipara-openclaw/memory-plugin";
 
 const memoryPlugin = createMemoryPlugin({
   apiKey: process.env.SNIPARA_API_KEY,
@@ -222,7 +222,7 @@ After running `npx snipara-openclaw-install`, your `~/.openclaw/openclaw.json` w
 ```json
 {
   "memory": {
-    "provider": "@snipara/openclaw/memory-plugin",
+    "provider": "snipara-openclaw/memory-plugin",
     "config": {
       "apiKey": "rlm_...",
       "projectSlug": "your-project"
@@ -250,7 +250,7 @@ After running `npx snipara-openclaw-install`, your `~/.openclaw/openclaw.json` w
 For programmatic access:
 
 ```typescript
-import { SniparaClient } from "@snipara/openclaw";
+import { SniparaClient } from "snipara-openclaw";
 
 const snipara = new SniparaClient({
   apiKey: process.env.SNIPARA_API_KEY,
