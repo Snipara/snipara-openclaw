@@ -1,355 +1,147 @@
 # snipara-openclaw
 
-Multi-agent swarms, context optimization, and safe code execution for OpenClaw.
+[![npm version](https://img.shields.io/npm/v/snipara-openclaw.svg)](https://www.npmjs.com/package/snipara-openclaw)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-[![npm version](https://badge.fury.io/js/%40snipara%2Fopenclaw.svg)](https://www.npmjs.com/package/snipara-openclaw)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+**TypeScript adapters for Snipara context, memory and coordination in OpenClaw.**
 
-## Why Snipara for OpenClaw?
+This repository contains the `snipara-openclaw` library, skill adapters and its
+bundled installer. Its source version is **0.1.1** and requires Node.js 18+.
+The current onboarding wrapper and native hook package are separate packages;
+their versions and configuration are not defined by this repository.
 
-OpenClaw's multi-agent setup lacks coordination primitives. When running 3+ agents, you face real problems:
+## Set up OpenClaw
 
-| Problem | Without Snipara | With Snipara |
-|---------|-----------------|--------------|
-| Two agents edit same file | Merge conflicts | `claim_resource()` locks file |
-| No task dependencies | Agents work out of order | `task_create()` with dependencies |
-| No shared state | Agents repeat work | `get_state()` / `set_state()` |
-| Can't test code safely | Agent says "should work" | `execute_python()` in sandbox |
-| Context overload | 500K tokens, 8K window | `context_query()` returns 4K relevant |
-| Memory is MEMORY.md | Weak, file-based | Semantic memory with `remember()` / `recall()` |
-
-## Quick Start
-
-### One-Command Install
+For current Snipara onboarding, use the dedicated wrapper:
 
 ```bash
-npx snipara-openclaw-install
+npx snipara-openclaw-install@latest --dry-run
+npx snipara-openclaw-install@latest
 ```
 
-This will:
-1. Detect your OpenClaw installation
-2. Prompt for your Snipara API key (or open signup)
-3. Configure all three skills automatically
-4. Test the connection
+It configures Hosted MCP and OpenClaw environment values directly, and
+installs `snipara-openclaw-hooks`. Follow its
+hook-enable and restart instructions. An installation or connection check does
+not prove the running OpenClaw process has loaded the new hooks.
 
-### Manual Installation
+```bash
+npx snipara-openclaw-hooks@latest status
+openclaw hooks list --verbose
+```
+
+Supply `SNIPARA_API_KEY` through the shell/launch environment or the installer's
+secret prompt and select `SNIPARA_PROJECT_SLUG` for the intended project. Do
+not put credentials in source files, chat or committed configuration.
+See the [OpenClaw integration guide](https://www.snipara.com/docs/integration/openclaw)
+and the [installer package](https://www.npmjs.com/package/snipara-openclaw-install).
+
+## Use the library
 
 ```bash
 npm install snipara-openclaw
 ```
 
-## Features
-
-### 1. Multi-Agent Swarm Coordination
-
-Coordinate multiple agents working on the same codebase.
-
 ```typescript
-import { swarm_create, swarm_join, claim_resource, task_create } from "snipara-openclaw/swarm-skill";
+import { SniparaClient } from "snipara-openclaw";
 
-// Create a swarm for code review
-const swarm = await swarm_create(ctx, { name: "code-review" });
+const apiKey = process.env.SNIPARA_API_KEY;
+const projectSlug = process.env.SNIPARA_PROJECT_SLUG;
+if (!apiKey || !projectSlug) {
+  throw new Error("Configure SNIPARA_API_KEY and SNIPARA_PROJECT_SLUG first");
+}
 
-// Agent joins the swarm
-await swarm_join(ctx, {
-  swarmId: swarm.swarmId,
-  agentId: "reviewer-1",
-  role: "worker"
-});
-
-// Claim exclusive access to a file
-await claim_resource(ctx, {
-  swarmId: swarm.swarmId,
-  agentId: "reviewer-1",
-  resourceType: "file",
-  resourceId: "src/auth.ts"
-});
-
-// Create task with dependencies
-await task_create(ctx, {
-  swarmId: swarm.swarmId,
-  agentId: "reviewer-1",
-  title: "Review auth changes",
-  dependsOn: ["task_setup_complete"]
-});
-```
-
-**12 Swarm Tools:**
-- `swarm_create`, `swarm_join` - Create and join swarms
-- `claim_resource`, `release_resource` - Distributed locks
-- `get_state`, `set_state` - Shared state with optimistic locking
-- `broadcast` - Send events to all agents
-- `task_create`, `task_claim`, `task_complete` - Distributed task queue
-- `remember`, `recall` - Persistent semantic memory
-
-### 2. Context Optimization
-
-Query your documentation with semantic search and token budgeting.
-
-```typescript
-import { context_query, upload_document, plan } from "snipara-openclaw/context-skill";
-
-// Upload project documentation
-await upload_document(ctx, {
-  path: "docs/architecture.md",
-  content: "# Architecture\n..."
-});
-
-// Query with token budget
-const context = await context_query(ctx, {
-  query: "How does authentication work?",
+const snipara = new SniparaClient({ apiKey, projectSlug });
+const context = await snipara.contextQuery("How does authentication work?", {
   maxTokens: 4000,
-  searchMode: "hybrid"
+  searchMode: "hybrid",
 });
-
-// Plan complex queries
-const executionPlan = await plan(ctx, {
-  query: "Implement OAuth 2.0 integration",
-  maxTokens: 16000,
-  strategy: "relevance_first"
-});
+const memories = await snipara.recall("authentication decisions", { limit: 5 });
 ```
 
-**8 Context Tools:**
-- `context_query` - Semantic search with token budgeting
-- `upload_document` - Add documentation to index
-- `search` - Regex pattern search
-- `decompose` - Break complex queries into sub-queries
-- `plan` - Generate execution plans
-- `multi_query` - Batch multiple queries
-- `sections` - List indexed sections
-- `stats` - Documentation statistics
+The client calls Hosted APIs. Available operations depend on the selected
+project, server version and access. These examples describe the checked-in
+TypeScript API; they do not establish current end-to-end compatibility for
+every server operation. Consult the server's advertised tools before relying
+on an optional capability.
 
-### 3. Safe Python Execution
+## Package surfaces
 
-Execute Python code in a secure sandbox via RLM-Runtime.
+| Import | Purpose | Source |
+| --- | --- | --- |
+| `snipara-openclaw` | `SniparaClient` and public types | [Client](src/client.ts) |
+| `snipara-openclaw/context-skill` | Retrieval, search and document helpers | [Context skill](src/context-skill/index.ts) |
+| `snipara-openclaw/swarm-skill` | Resource claims, shared state, tasks and memory | [Swarm skill](src/swarm-skill/index.ts) |
+| `snipara-openclaw/memory-plugin` | OpenClaw memory adapter | [Memory plugin](src/memory-plugin.ts) |
+| `snipara-openclaw/execution-skill` | Python and agent execution API adapters | [Execution skill](src/execution-skill/index.ts) |
+
+Skill functions receive an OpenClaw context. For a direct call, provide one
+explicitly or supply the environment variables above:
 
 ```typescript
-import { execute_python, agent_run, agent_status } from "snipara-openclaw/execution-skill";
+import { context_query } from "snipara-openclaw/context-skill";
 
-// Test code in sandbox
-const result = await execute_python(ctx, {
-  code: `
-def fibonacci(n):
-    if n <= 1:
-        return n
-    return fibonacci(n-1) + fibonacci(n-2)
-
-result = [fibonacci(i) for i in range(10)]
-print(f"Fibonacci: {result}")
-  `,
-  profile: "default"  // 30s timeout
-});
-
-// Start autonomous agent for complex tasks
-const run = await agent_run(ctx, {
-  task: "Implement and test a binary search function with edge cases",
-  maxIterations: 10
-});
-
-// Check status
-const status = await agent_status(ctx, { runId: run.runId });
-```
-
-**4 Execution Tools:**
-- `execute_python` - Sandboxed Python execution
-- `agent_run` - Start autonomous agent
-- `agent_status` - Check agent progress
-- `agent_cancel` - Stop running agent
-
-**Allowed imports:** `json`, `re`, `math`, `datetime`, `collections`, `itertools`, `functools`, `operator`, `string`, `random`, `hashlib`, `base64`, `urllib.parse`
-
-**Blocked (for safety):** `os`, `subprocess`, `socket`, file I/O, network access
-
-### 4. Persistent Memory (via Swarm Skill)
-
-Replace MEMORY.md with semantic memory.
-
-```typescript
-import { remember, recall } from "snipara-openclaw/swarm-skill";
-
-// Store a decision
-await remember(ctx, {
-  content: "User prefers functional components over class components",
-  type: "preference",
-  category: "coding-style",
-  ttlDays: 90
-});
-
-// Recall relevant memories
-const memories = await recall(ctx, {
-  query: "user preferences for React",
-  limit: 5,
-  minRelevance: 0.7
+const ctx = { config: {} }; // Reads the configured environment.
+const result = await context_query(ctx, {
+  query: "Which decisions constrain this change?",
+  maxTokens: 2000,
 });
 ```
 
-## Memory Plugin
+## Memory and coordination
 
-Use Snipara as OpenClaw's memory backend:
+The memory adapter can be configured programmatically:
 
 ```typescript
 import { createMemoryPlugin } from "snipara-openclaw/memory-plugin";
 
-const memoryPlugin = createMemoryPlugin({
-  apiKey: process.env.SNIPARA_API_KEY,
-  projectSlug: "my-project"
-});
+const apiKey = process.env.SNIPARA_API_KEY;
+const projectSlug = process.env.SNIPARA_PROJECT_SLUG;
+if (!apiKey || !projectSlug) throw new Error("Missing project credentials");
 
-// Store memory
-await memoryPlugin.store("user-preferences", {
-  theme: "dark",
-  language: "typescript"
-});
-
-// Search memories
-const results = await memoryPlugin.search("user preferences", { limit: 10 });
+const memory = createMemoryPlugin({ apiKey, projectSlug });
+const matches = await memory.search("project conventions", { limit: 5 });
 ```
 
-## Configuration
+Store reusable decisions and their evidence deliberately. Resource claims and
+task dependencies coordinate participating agents; they do not prevent an
+uncoordinated process from editing the same file. Claim release and failed
+task handling remain part of the caller's workflow.
 
-### Environment Variables
+## Execution boundaries
+
+The execution skill is a remote API adapter. It does not install or qualify a
+local sandbox, and its presence does not prove the server supports the
+requested execution tool. Isolation, allowed imports, timeouts and provider
+requirements depend on the actual backend.
+
+For deterministic repository tests, use
+[Snipara Sandbox](https://github.com/Snipara/snipara-sandbox) with a reviewed
+validation request, immutable sources and a prepared dependency image.
+Do not treat a restricted Python snippet as a way to launch arbitrary shell
+tests. Starting an autonomous agent is a separate explicit operation.
+
+## Bundled installer compatibility
+
+This library exports a historical `snipara-openclaw-install` executable from
+`dist/cli/install.js`. To inspect that exact executable without confusing it
+with the separate onboarding package:
 
 ```bash
-export SNIPARA_API_KEY="rlm_your_key_here"
-export SNIPARA_PROJECT_SLUG="your-project"
+npm exec --package=snipara-openclaw@0.1.1 -- snipara-openclaw-install --help
 ```
 
-### OpenClaw Configuration
+For new onboarding, use the dedicated package shown above. Do not copy the
+historical `memory.provider`/`skills` configuration as the current native hook
+setup. Read [package.json](package.json) for the actual exports and scripts.
 
-After running `npx snipara-openclaw-install`, your `~/.openclaw/openclaw.json` will include:
+## Development and support
 
-```json
-{
-  "memory": {
-    "provider": "snipara-openclaw/memory-plugin",
-    "config": {
-      "apiKey": "rlm_...",
-      "projectSlug": "your-project"
-    }
-  },
-  "skills": {
-    "snipara-swarm": {
-      "enabled": true,
-      "config": { "apiKey": "rlm_...", "projectSlug": "your-project" }
-    },
-    "snipara-context": {
-      "enabled": true,
-      "config": { "apiKey": "rlm_...", "projectSlug": "your-project" }
-    },
-    "snipara-execution": {
-      "enabled": true,
-      "config": { "apiKey": "rlm_...", "projectSlug": "your-project" }
-    }
-  }
-}
-```
+The repository provides `build`, `type-check`, `lint` and `test:run` scripts.
+Use the project's approved validation environment for executable checks.
+Live integration checks require separately configured project access.
 
-## Direct Client Usage
+Get project credentials from the [Snipara dashboard](https://www.snipara.com/dashboard).
+Use [current pricing](https://www.snipara.com/pricing) for service limits rather
+than historical quotas copied into this README.
 
-For programmatic access:
-
-```typescript
-import { SniparaClient } from "snipara-openclaw";
-
-const snipara = new SniparaClient({
-  apiKey: process.env.SNIPARA_API_KEY,
-  projectSlug: "my-project"
-});
-
-// Memory
-await snipara.remember("User prefers dark mode", { type: "preference" });
-const memories = await snipara.recall("user preferences");
-
-// Context
-const context = await snipara.contextQuery("how does auth work?");
-
-// Execution
-const result = await snipara.executePython("print('Hello!')");
-
-// Swarms
-const swarm = await snipara.createSwarm("code-review");
-await snipara.joinSwarm(swarm.swarmId, "agent-1");
-await snipara.claim(swarm.swarmId, "agent-1", {
-  resourceType: "file",
-  resourceId: "src/auth.ts"
-});
-```
-
-## CLI Commands
-
-```bash
-# Install (default command)
-npx snipara-openclaw-install
-
-# Check status
-npx snipara-openclaw-install status
-
-# Uninstall
-npx snipara-openclaw-install uninstall
-
-# Preview without changes
-npx snipara-openclaw-install --dry-run
-
-# Force reconfiguration
-npx snipara-openclaw-install --force
-```
-
-## Example: 3-Agent Code Review Swarm
-
-```typescript
-// coordinator.ts
-const swarm = await swarm_create(ctx, { name: "pr-review-123" });
-
-// Create review tasks
-await task_create(ctx, { swarmId, agentId: "coordinator", title: "Review auth changes", priority: 10 });
-await task_create(ctx, { swarmId, agentId: "coordinator", title: "Review API routes", priority: 5 });
-await task_create(ctx, { swarmId, agentId: "coordinator", title: "Run test suite", dependsOn: ["auth", "api"] });
-
-// agent-1.ts (reviewer)
-await swarm_join(ctx, { swarmId, agentId: "reviewer-1", role: "worker" });
-const task = await task_claim(ctx, { swarmId, agentId: "reviewer-1" });
-await claim_resource(ctx, { swarmId, agentId: "reviewer-1", resourceType: "file", resourceId: task.metadata.file });
-
-// Get relevant context
-const context = await context_query(ctx, { query: `review ${task.title}`, maxTokens: 4000 });
-
-// Do review work...
-await task_complete(ctx, { swarmId, agentId: "reviewer-1", taskId: task.taskId, success: true });
-await release_resource(ctx, { swarmId, agentId: "reviewer-1", resourceId: task.metadata.file });
-
-// agent-2.ts (test runner)
-await swarm_join(ctx, { swarmId, agentId: "tester-1", role: "worker" });
-const testTask = await task_claim(ctx, { swarmId, agentId: "tester-1" });
-
-// Run tests in sandbox
-const result = await execute_python(ctx, {
-  code: "import subprocess; result = subprocess.run(['pytest'], capture_output=True)",
-  profile: "extended"  // 5 minute timeout
-});
-
-await task_complete(ctx, { swarmId, agentId: "tester-1", taskId: testTask.taskId, success: !result.error });
-```
-
-## Get Your API Key
-
-1. Visit [snipara.com/dashboard](https://snipara.com/dashboard)
-2. Create or select a project
-3. Go to Settings > API Keys
-4. Generate a new key
-
-**Free tier:** 100 queries/month
-**Pro tier:** 5,000 queries/month
-**Team tier:** 20,000 queries/month
-
-## Documentation
-
-- [Full Integration Guide](https://snipara.com/docs/integration/openclaw)
-- [Swarm Skill Reference](https://snipara.com/docs/tools/swarm)
-- [Context Skill Reference](https://snipara.com/docs/tools/context)
-- [Execution Skill Reference](https://snipara.com/docs/tools/execution)
-- [Memory Plugin API](https://snipara.com/docs/plugins/memory)
-
-## License
-
-MIT
+MIT licensed; see [LICENSE](LICENSE).
